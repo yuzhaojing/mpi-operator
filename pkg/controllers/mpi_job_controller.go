@@ -1005,16 +1005,19 @@ func newLauncher(mpiJob *kubeflow.MPIJob, kubectlDeliveryImage string) *batchv1.
 	// clean Volumes and VolumeMounts if not mounts on the launcher.
 	if !mpiJob.Spec.MountsOnLauncher {
 		volumeNames := make(map[string]string)
-		for k, volume := range podSpec.Spec.Volumes {
+		for i := 0; i < len(podSpec.Spec.Volumes); i++ {
+			volume := podSpec.Spec.Volumes[i]
 			if volume.PersistentVolumeClaim != nil {
-				podSpec.Spec.Volumes = append(podSpec.Spec.Volumes[:k], podSpec.Spec.Volumes[k+1:]...)
+				podSpec.Spec.Volumes = append(podSpec.Spec.Volumes[:i], podSpec.Spec.Volumes[i+1:]...)
 				volumeNames[volume.Name] = ""
+				i--
 			}
 		}
 
-		for k, volumeMount := range container.VolumeMounts {
-			if _, ok := volumeNames[volumeMount.Name]; ok {
-				container.VolumeMounts = append(container.VolumeMounts[:k], container.VolumeMounts[k+1:]...)
+		for i := 0; i < len(container.VolumeMounts); i++ {
+			if _, ok := volumeNames[container.VolumeMounts[i].Name]; ok {
+				container.VolumeMounts = append(container.VolumeMounts[:i], container.VolumeMounts[i+1:]...)
+				i--
 			}
 		}
 	}
